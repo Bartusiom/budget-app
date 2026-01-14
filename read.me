@@ -1,0 +1,152 @@
+# Budżet domowy (PHP + PDO)
+
+## Stack
+- PHP 8.x (OOP)
+- MySQL/MariaDB
+- PDO (prepared statements)
+- Sesje (autoryzacja)
+- XAMPP (Apache + MySQL)
+
+## Funkcje
+- Rejestracja i logowanie użytkownika
+- Haszowanie haseł: `password_hash()` / `password_verify()`
+- Dostęp do panelu tylko po zalogowaniu
+- Kategorie: CRUD
+- Transakcje: CRUD (z podziałem na `income` / `expense`)
+- Dashboard miesięczny: przychody / wydatki / bilans + top kategorie wydatków
+- Import transakcji z CSV (separator `;`, auto-tworzenie kategorii jeśli brak)
+- Załączniki do transakcji (JPG/PNG/PDF)
+- Soft delete transakcji + kosz (przywracanie / usuwanie na stałe)
+
+## Struktura katalogów
+- `public/` — endpointy i formularze
+- `src/` — klasy (Db/Auth/Repo/Import/Upload)
+- `views/` — `header.php`, `footer.php`
+
+## Uruchomienie (XAMPP)
+1. Skopiuj projekt do: `C:\xampp\htdocs\budget-app`
+2. Uruchom Apache i MySQL
+3. Utwórz bazę `budget_app` i wykonaj SQL z sekcji „Baza danych”
+4. Ustaw dane połączenia w `src/config.php`
+5. Wejdź: `http://localhost/budget-app/public/`
+
+## Konfiguracja ścieżek (BASE)
+Plik: `src/App.php`
+- `BASE = '/budget-app/public'`
+
+W aplikacji:
+- linki: `App::url('plik.php')`
+- przekierowania: `App::redirect('plik.php')`
+
+## Baza danych (SQL)
+Wykonaj w phpMyAdmin:
+
+```sql
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(50) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_categories_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_user_category (user_id, name)
+) ENGINE=InnoDB;
+
+CREATE TABLE transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  category_id INT NOT NULL,
+  type ENUM('income','expense') NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  happened_on DATE NOT NULL,
+  description VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL DEFAULT NULL,
+  CONSTRAINT fk_transactions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_transactions_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
+  INDEX idx_user_date (user_id, happened_on),
+  INDEX idx_transactions_user_deleted (user_id, deleted_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE transaction_attachments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  transaction_id INT NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  stored_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  size_bytes INT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_attach_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_attach_tx FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
+  INDEX idx_attach_tx (transaction_id)
+) ENGINE=InnoDB;
+```
+
+## Uploady (załączniki)
+Folder:
+- `public/uploads/receipts/`
+
+Dozwolone typy:
+- `image/jpeg`, `image/png`, `application/pdf`
+
+Limit:
+- 5MB na plik
+
+## Import CSV
+Endpoint:
+- `public/transactions_import.php`
+
+Format (separator `;`):
+```text
+date;type;amount;category;description
+2026-01-13;expense;25.50;Jedzenie;Obiad
+2026-01-13;income;3000.00;Wypłata;Styczeń
+```
+
+Wymagania pól:
+- `date`: `YYYY-MM-DD`
+- `type`: `income` lub `expense`
+- `amount`: liczba dodatnia (np. `25.50`)
+- `category`: 2–50 znaków (litery/cyfry/spacje/._-)
+- `description`: opcjonalne
+
+## Endpointy (public/)
+Auth:
+- `register.php`
+- `login.php`
+- `logout.php`
+
+Dashboard:
+- `dashboard.php`
+
+Kategorie:
+- `categories.php`
+- `category_create.php`
+- `category_edit.php`
+- `category_delete.php` (POST)
+
+Transakcje:
+- `transactions.php`
+- `transaction_create.php`
+- `transaction_edit.php`
+- `transaction_delete.php` (POST → soft delete)
+
+Kosz:
+- `transactions_trash.php`
+- `transaction_restore.php` (POST)
+- `transaction_force_delete.php` (POST)
+
+Załączniki:
+- `transaction_receipt_upload.php?id=...`
+- `receipt_view.php?id=...`
+- `receipt_delete.php` (POST)
+
+## Reguły dostępu do danych
+Wszystkie operacje bazodanowe są ograniczone do danych zalogowanego użytkownika przez `user_id`.
