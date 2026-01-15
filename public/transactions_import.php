@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_FILES['csv']) || !isset($_FILES['csv']['error']) || $_FILES['csv']['error'] !== UPLOAD_ERR_OK) {
         $errors[] = 'Dodaj plik CSV.';
     } else {
-        // podstawowa walidacja pliku
+
         $size = (int)($_FILES['csv']['size'] ?? 0);
         if ($size <= 0 || $size > 2 * 1024 * 1024) { // 2MB
             $errors[] = 'Plik za duży (max 2MB).';
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $catRepo = new CategoryRepository($pdo);
                 $txRepo = new TransactionRepository($pdo);
 
-                // mapowanie nazw kategorii -> id
+
                 $cats = $catRepo->allByUser(Auth::id());
                 $catMap = [];
                 foreach ($cats as $c) {
@@ -71,22 +71,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $key = mb_strtolower($r['category']);
 
-                    // Auto-tworzenie kategorii jeśli nie istnieje
+
                     if (!isset($catMap[$key])) {
                         try {
                             $catRepo->create(Auth::id(), $r['category']);
                         } catch (PDOException $e) {
-                            // jeśli konflikt UNIQUE (ktoś dodał w międzyczasie) - ignoruj
+
                         }
 
-                        // odśwież mapę kategorii
+
                         $cats2 = $catRepo->allByUser(Auth::id());
                         $catMap = [];
                         foreach ($cats2 as $c) {
                             $catMap[mb_strtolower($c['name'])] = (int)$c['id'];
                         }
 
-                        // ważne: przelicz key po odświeżeniu mapy
+
                         $key = mb_strtolower($r['category']);
                     }
 

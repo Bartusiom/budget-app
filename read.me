@@ -1,45 +1,45 @@
-# Budżet domowy (PHP + PDO)
+## Projekt zaliczeniowy z laboratorium "Programowanie aplikacji internetowych"
 
-## Stack
-- PHP 8.x (OOP)
+## Tematyka projektu: Aplikacja do zarządzania budżetem domowym (Budget App)
+
+## Autor: Bartosz Owczarczyk
+
+## Funkcjonalności:
+- uwierzytelnianie (rejestracja, logowanie, wylogowanie), haszowanie haseł (`password_hash`, `password_verify`)
+- panel użytkownika (dostęp tylko po zalogowaniu)
+- kategorie: dodawanie, edycja, usuwanie
+- transakcje: dodawanie, edycja, usuwanie (przychody/wydatki)
+- dashboard miesięczny: suma przychodów, suma wydatków, bilans, top kategorie wydatków
+- import transakcji z pliku CSV (automatyczne tworzenie kategorii gdy nie istnieją)
+- załączniki do transakcji (paragony): upload i podgląd (JPG/PNG/PDF)
+- usuwanie miękkie (soft delete) transakcji + kosz: przywracanie i usuwanie na stałe
+
+## Narzędzia i technologie:
+- strona serwera: PHP
+- baza danych: MySQL/MariaDB, PDO
+- strona klienta: HTML + minimalny CSS
+- środowisko uruchomieniowe: XAMPP (Apache + MySQL)
+
+## Wymagania
+
+Wersje programów wykorzystane do tworzenia aplikacji (aplikacja nie została przetestowana z kompatybilnością wcześniejszych wersji):
+- XAMPP (MySQL Database, APACHE Web Server)
+- PHP 8.2.x
 - MySQL/MariaDB
-- PDO (prepared statements)
-- Sesje (autoryzacja)
-- XAMPP (Apache + MySQL)
 
-## Funkcje
-- Rejestracja i logowanie użytkownika
-- Haszowanie haseł: `password_hash()` / `password_verify()`
-- Dostęp do panelu tylko po zalogowaniu
-- Kategorie: CRUD
-- Transakcje: CRUD (z podziałem na `income` / `expense`)
-- Dashboard miesięczny: przychody / wydatki / bilans + top kategorie wydatków
-- Import transakcji z CSV (separator `;`, auto-tworzenie kategorii jeśli brak)
-- Załączniki do transakcji (JPG/PNG/PDF)
-- Soft delete transakcji + kosz (przywracanie / usuwanie na stałe)
-
-## Struktura katalogów
-- `public/` — endpointy i formularze
-- `src/` — klasy (Db/Auth/Repo/Import/Upload)
-- `views/` — `header.php`, `footer.php`
-
-## Uruchomienie (XAMPP)
-1. Skopiuj projekt do: `C:\xampp\htdocs\budget-app`
-2. Uruchom Apache i MySQL
-3. Utwórz bazę `budget_app` i wykonaj SQL z sekcji „Baza danych”
-4. Ustaw dane połączenia w `src/config.php`
-5. Wejdź: `http://localhost/budget-app/public/`
-
-## Konfiguracja ścieżek (BASE)
-Plik: `src/App.php`
-- `BASE = '/budget-app/public'`
-
-W aplikacji:
-- linki: `App::url('plik.php')`
-- przekierowania: `App::redirect('plik.php')`
+## Uruchomienie
+1. Umieścić folder projektu `budget-app` w katalogu: `XAMPP\htdocs`
+2. Włączyć w XAMPP: Apache oraz MySQL
+3. Wejść do phpMyAdmin: `http://localhost/phpmyadmin`
+4. Utworzyć bazę danych o nazwie: `budget_app`
+5. Wykonać skrypt SQL z sekcji Baza danych
+6. Uruchomić a potem usunąć plik /public/make_test_users.php
+7. Skonfigurować połączenie z bazą w pliku: `src/config.php`
+8. Uruchomić aplikację w przeglądarce pod adresem:
+   - `http://localhost/budget-app/public/`
 
 ## Baza danych (SQL)
-Wykonaj w phpMyAdmin:
+Skrypt do utworzenia tabel:
 
 ```sql
 CREATE TABLE users (
@@ -89,64 +89,31 @@ CREATE TABLE transaction_attachments (
 ) ENGINE=InnoDB;
 ```
 
-## Uploady (załączniki)
-Folder:
-- `public/uploads/receipts/`
+## Konta testowe
 
-Dozwolone typy:
-- `image/jpeg`, `image/png`, `application/pdf`
+-- TEST USERS
+-- admin@admin.com -> Administrator123!
+-- test@test.com   -> KontoTest11!
+-- user@user.com   -> User12345!
 
-Limit:
-- 5MB na plik
 
 ## Import CSV
-Endpoint:
-- `public/transactions_import.php`
+- Strona importu: `public/transactions_import.php`
+- Wymagany format (separator `;`):
 
-Format (separator `;`):
 ```text
 date;type;amount;category;description
-2026-01-13;expense;25.50;Jedzenie;Obiad
-2026-01-13;income;3000.00;Wypłata;Styczeń
+2026-01-02;income;4500.00;Wypłata;Pensja za styczeń
+2026-01-03;expense;27.50;Jedzenie;Zakupy spożywcze
 ```
 
-Wymagania pól:
-- `date`: `YYYY-MM-DD`
-- `type`: `income` lub `expense`
-- `amount`: liczba dodatnia (np. `25.50`)
-- `category`: 2–50 znaków (litery/cyfry/spacje/._-)
-- `description`: opcjonalne
+Przykładowy plik CSV: `sample-transactions_Version2.csv`.
 
-## Endpointy (public/)
-Auth:
-- `register.php`
-- `login.php`
-- `logout.php`
+## Załączniki (paragony)
+- Folder na pliki: `public/uploads/receipts/`
+- Dozwolone typy: JPG / PNG / PDF
+- Limit: 5MB
 
-Dashboard:
-- `dashboard.php`
-
-Kategorie:
-- `categories.php`
-- `category_create.php`
-- `category_edit.php`
-- `category_delete.php` (POST)
-
-Transakcje:
-- `transactions.php`
-- `transaction_create.php`
-- `transaction_edit.php`
-- `transaction_delete.php` (POST → soft delete)
-
-Kosz:
-- `transactions_trash.php`
-- `transaction_restore.php` (POST)
-- `transaction_force_delete.php` (POST)
-
-Załączniki:
-- `transaction_receipt_upload.php?id=...`
-- `receipt_view.php?id=...`
-- `receipt_delete.php` (POST)
-
-## Reguły dostępu do danych
-Wszystkie operacje bazodanowe są ograniczone do danych zalogowanego użytkownika przez `user_id`.
+## Uwagi
+1. Aplikacja działa pod ścieżką: `/budget-app/public`, dlatego linki i przekierowania są budowane przez `App::url()` / `App::redirect()` (plik `src/App.php`).
+2. Repozytorium projektu: **[GITHUB](https://github.com/Bartusiom/budget-app)**

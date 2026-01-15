@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ins = $pdo->prepare('INSERT INTO users (email, password_hash) VALUES (:email, :hash)');
             $ins->execute(['email' => $email, 'hash' => $hash]);
 
-            // po sukcesie: komunikat + link z poprawnym BASE
+
             $ok = 'Konto utworzone. Możesz się zalogować.';
         }
     }

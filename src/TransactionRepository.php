@@ -81,7 +81,7 @@ final class TransactionRepository
         ]);
     }
 
-    // SOFT DELETE
+
     public function softDelete(int $id, int $userId): void
     {
         $st = $this->pdo->prepare(
@@ -92,7 +92,7 @@ final class TransactionRepository
         $st->execute(['id' => $id, 'uid' => $userId]);
     }
 
-    // RESTORE
+
     public function restore(int $id, int $userId): void
     {
         $st = $this->pdo->prepare(
@@ -103,7 +103,7 @@ final class TransactionRepository
         $st->execute(['id' => $id, 'uid' => $userId]);
     }
 
-    // HARD DELETE (opcjonalnie, np. z kosza) - usuwa na stałe
+
     public function forceDelete(int $id, int $userId): void
     {
         $st = $this->pdo->prepare('DELETE FROM transactions WHERE id = :id AND user_id = :uid');

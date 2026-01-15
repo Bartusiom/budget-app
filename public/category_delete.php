@@ -15,8 +15,7 @@ if ($id > 0) {
     try {
         (new CategoryRepository(Db::pdo()))->delete($id, Auth::id());
     } catch (PDOException $e) {
-        // FK RESTRICT może zablokować usunięcie, jeśli są transakcje
-        // celowo bez szczegółów - wracamy na listę
+
     }
 }
 
